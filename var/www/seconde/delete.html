@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Supprimer un fichier</title>
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: linear-gradient(45deg, #000428, #004e92);
+            color: #fff;
+        }
+
+        .container {
+            padding: 2rem;
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            box-shadow: 0 0 20px rgba(0, 100, 255, 0.3);
+            text-align: center;
+            max-width: 500px;
+            width: 100%;
+        }
+
+        h1 {
+            color: #00ffff;
+            text-shadow: 0 0 10px rgba(0, 255, 255, 0.5);
+        }
+
+        p {
+            color: #e0e0ff;
+        }
+
+        .btn-delete {
+            display: inline-block;
+            margin-top: 1.5rem;
+            padding: 0.75rem 1.5rem;
+            font-size: 1em;
+            color: #fff;
+            background-color: #ff4c4c;
+            border-radius: 8px;
+            box-shadow: 0 4px 10px rgba(255, 0, 0, 0.5);
+            cursor: pointer;
+            border: none;
+            transition: background-color 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .btn-delete:hover {
+            background-color: #ff1c1c;
+            box-shadow: 0 6px 15px rgba(255, 0, 0, 0.6);
+        }
+
+        input[type="text"] {
+            padding: 0.5rem;
+            border-radius: 8px;
+            border: none;
+            margin-top: 1rem;
+            width: 80%;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Supprimer un fichier</h1>
+        <p>Entrez le nom du fichier à supprimer :</p>
+        
+        <input type="text" id="filename" placeholder="Ex : fichier.txt" required>
+        <button class="btn-delete" onclick="deleteFile()">Supprimer le fichier</button>
+
+        <p id="response" style="margin-top: 1rem; color: #7af7ff;"></p>
+    </div>
+
+    <script>
+        async function deleteFile() {
+            const filename = document.getElementById('filename').value;
+            const responseElement = document.getElementById('response');
+
+            if (!filename) {
+                responseElement.textContent = "Veuillez entrer un nom de fichier.";
+                return;
+            }
+
+            try {
+                const response = await fetch(`${filename}`, {
+                    method: 'DELETE'
+                });
+
+                if (response.ok) {
+                    responseElement.textContent = `Le fichier '${filename}' a été supprimé avec succès.`;
+                } else {
+                    responseElement.textContent = "Erreur : Impossible de supprimer le fichier.";
+                }
+            } catch (error) {
+                responseElement.textContent = "Erreur de connexion avec le serveur.";
+            }
+        }
+    </script>
+</body>
+</html>

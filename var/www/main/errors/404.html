@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>404 - Lost in Space</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            background: #000;
+            color: #fff;
+            font-family: 'Arial', sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+        }
+
+        .stars {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .error-container {
+            text-align: center;
+            z-index: 1;
+            margin-bottom: 2rem;
+        }
+
+        h1 {
+            font-size: 8em;
+            margin: 0;
+            background: linear-gradient(45deg, #ff6b6b, #4ecdc4);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-shadow: 0 0 10px rgba(255,255,255,0.3);
+        }
+
+        p {
+            font-size: 1.5em;
+            color: #4ecdc4;
+            margin: 1rem 0;
+        }
+
+        #gameCanvas {
+            border: 2px solid #4ecdc4;
+            border-radius: 10px;
+            background: rgba(0, 0, 0, 0.5);
+        }
+
+        .instructions {
+            margin-top: 1rem;
+            color: #ff6b6b;
+            font-size: 0.9em;
+        }
+
+        #score {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            font-size: 1.5em;
+            color: #4ecdc4;
+        }
+    </style>
+</head>
+<body>
+    <div class="stars"></div>
+    <div class="error-container">
+        <h1>404</h1>
+        <p>Houston, we have a problem!</p>
+    </div>
+    <canvas id="gameCanvas" width="600" height="400"></canvas>
+    <div class="instructions">Use arrow keys to navigate your ship. Avoid asteroids!</div>
+    <div id="score">Score: 0</div>
+
+    <script>
+        // Create stars background
+        function createStars() {
+            const stars = document.querySelector('.stars');
+            for (let i = 0; i < 200; i++) {
+                const star = document.createElement('div');
+                star.style.position = 'absolute';
+                star.style.left = Math.random() * 100 + '%';
+                star.style.top = Math.random() * 100 + '%';
+                star.style.width = Math.random() * 3 + 'px';
+                star.style.height = star.style.width;
+                star.style.backgroundColor = '#fff';
+                star.style.borderRadius = '50%';
+                star.style.animation = `twinkle ${Math.random() * 3 + 1}s infinite`;
+                stars.appendChild(star);
+            }
+        }
+
+        // Game setup
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const scoreElement = document.getElementById('score');
+
+        let score = 0;
+        let gameLoop;
+        let asteroids = [];
+
+        const ship = {
+            x: canvas.width / 2,
+            y: canvas.height - 50,
+            width: 30,
+            height: 30,
+            speed: 5
+        };
+
+        const keys = {
+            ArrowLeft: false,
+            ArrowRight: false,
+            ArrowUp: false,
+            ArrowDown: false
+        };
+
+        // Event listeners
+        document.addEventListener('keydown', (e) => keys[e.key] = true);
+        document.addEventListener('keyup', (e) => keys[e.key] = false);
+
+        function createAsteroid() {
+            return {
+                x: Math.random() * canvas.width,
+                y: -20,
+                size: Math.random() * 20 + 10,
+                speed: Math.random() * 2 + 1
+            };
+        }
+
+        function drawShip() {
+            ctx.fillStyle = '#4ecdc4';
+            ctx.beginPath();
+            ctx.moveTo(ship.x, ship.y);
+            ctx.lineTo(ship.x - 15, ship.y + 30);
+            ctx.lineTo(ship.x + 15, ship.y + 30);
+            ctx.closePath();
+            ctx.fill();
+        }
+
+        function drawAsteroids() {
+            ctx.fillStyle = '#ff6b6b';
+            asteroids.forEach(asteroid => {
+                ctx.beginPath();
+                ctx.arc(asteroid.x, asteroid.y, asteroid.size, 0, Math.PI * 2);
+                ctx.fill();
+            });
+        }
+
+        function updateGame() {
+            // Move ship
+            if (keys.ArrowLeft) ship.x = Math.max(15, ship.x - ship.speed);
+            if (keys.ArrowRight) ship.x = Math.min(canvas.width - 15, ship.x + ship.speed);
+            if (keys.ArrowUp) ship.y = Math.max(15, ship.y - ship.speed);
+            if (keys.ArrowDown) ship.y = Math.min(canvas.height - 15, ship.y + ship.speed);
+
+            // Update asteroids
+            if (Math.random() < 0.02) asteroids.push(createAsteroid());
+            
+            asteroids = asteroids.filter(asteroid => {
+                asteroid.y += asteroid.speed;
+                
+                // Check collision
+                const dx = ship.x - asteroid.x;
+                const dy = ship.y - asteroid.y;
+                const distance = Math.sqrt(dx * dx + dy * dy);
+                
+                if (distance < asteroid.size + 15) {
+                    // Game over
+                    clearInterval(gameLoop);
+                    alert(`Game Over! Score: ${score}`);
+                    resetGame();
+                    return false;
+                }
+                
+                if (asteroid.y > canvas.height + 20) {
+                    score++;
+                    scoreElement.textContent = `Score: ${score}`;
+                    return false;
+                }
+                
+                return true;
+            });
+        }
+
+        function drawGame() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            drawShip();
+            drawAsteroids();
+        }
+
+        function gameUpdate() {
+            updateGame();
+            drawGame();
+        }
+
+        function resetGame() {
+            ship.x = canvas.width / 2;
+            ship.y = canvas.height - 50;
+            asteroids = [];
+            score = 0;
+            scoreElement.textContent = `Score: ${score}`;
+            gameLoop = setInterval(gameUpdate, 1000/60);
+        }
+
+        // Initialize game
+        createStars();
+        resetGame();
+    </script>
+</body>
+</html>

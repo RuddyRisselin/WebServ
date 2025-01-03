@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Portail Galactique</title>
+  <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <script src="https://unpkg.com/babel-standalone@6/babel.min.js"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, sans-serif;
+      background: linear-gradient(45deg, #0b0b2a, #1a1a4a);
+      color: white;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      overflow: hidden;
+    }
+    .container {
+      background: rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(10px);
+      padding: 2rem;
+      border-radius: 20px;
+      box-shadow: 0 0 20px rgba(255, 255, 255, 0.1);
+      width: 90%;
+      max-width: 500px;
+    }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+
+  <script type="text/babel">
+    function FileUpload() {
+      // Upload de texte
+      const handleTextUpload = async (e) => {
+        e.preventDefault();
+        const fileName = e.target.elements.fileName.value;
+        const fileContent = e.target.elements.fileContent.value;
+
+        try {
+          const response = await fetch('/upload-text', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ fileName, fileContent }),
+          });
+
+          if (response.ok) {
+            alert("Texte envoyé avec succès !");
+          } else {
+            alert("Erreur lors de l'envoi du texte.");
+          }
+        } catch (error) {
+          console.error("Erreur lors de l'envoi du texte:", error);
+          alert("Impossible d'envoyer le texte.");
+        }
+      };
+
+      // Upload de fichier
+      const handleFileUpload = async (e) => {
+        e.preventDefault();
+        const formData = new FormData(e.target);
+
+        try {
+          const response = await fetch('/upload-file', {
+            method: 'POST',
+            body: formData,
+          });
+
+          if (response.ok) {
+            alert("Fichier envoyé avec succès !");
+          } else {
+            alert("Erreur lors de l'envoi du fichier.");
+          }
+        } catch (error) {
+          console.error("Erreur lors de l'envoi du fichier:", error);
+          alert("Impossible d'envoyer le fichier.");
+        }
+      };
+
+      return (
+        <div className="container mb-8">
+          <h2 className="text-xl font-bold mb-4 text-center">Uploader Fichier ou Texte</h2>
+
+          {/* Formulaire pour l'upload de texte */}
+          <form onSubmit={handleTextUpload} className="mb-4">
+            <label className="block mb-2">Nom du fichier texte :</label>
+            <input
+              type="text"
+              name="fileName"
+              className="w-full mb-4 p-2 rounded-lg bg-gray-800 text-white"
+              placeholder="Nom du fichier"
+              required
+            />
+            <label className="block mb-2">Contenu du texte :</label>
+            <textarea
+              name="fileContent"
+              className="w-full mb-4 p-2 rounded-lg bg-gray-800 text-white"
+              placeholder="Contenu du texte"
+              rows="4"
+              required
+            ></textarea>
+            <button
+              type="submit"
+              className="w-full bg-gradient-to-r from-purple-600 to-blue-600 text-white py-2 rounded-lg font-semibold hover:from-purple-700 hover:to-blue-700 transition-all duration-300 transform hover:scale-105"
+            >
+              Envoyer le Texte
+            </button>
+          </form>
+
+          {/* Formulaire pour l'upload de fichier */}
+          <form onSubmit={handleFileUpload} encType="multipart/form-data">
+            <label className="block mb-2">Sélectionnez un fichier :</label>
+            <input
+              type="file"
+              name="file"
+              className="w-full mb-4 p-2 rounded-lg bg-gray-800 text-white"
+              required
+            />
+            <button
+              type="submit"
+              className="w-full bg-gradient-to-r from-purple-600 to-blue-600 text-white py-2 rounded-lg font-semibold hover:from-purple-700 hover:to-blue-700 transition-all duration-300 transform hover:scale-105"
+            >
+              Envoyer le Fichier
+            </button>
+          </form>
+        </div>
+      );
+    }
+
+    function FileList() {
+      const [files, setFiles] = React.useState([]);
+      const [error, setError] = React.useState('');
+
+      const fetchFiles = () => {
+        fetch('/cgi-bin/list_files.py')
+          .then((response) => response.json())
+          .then((data) => {
+            if (data.files) {
+              setFiles(data.files);
+              setError('');
+            } else {
+              setError('Aucun fichier disponible.');
+            }
+          })
+          .catch((err) => {
+            console.error('Erreur lors de la récupération des fichiers:', err);
+            setError('Erreur lors de la récupération des fichiers.');
+          });
+      };
+
+      return (
+        <div className="container">
+          <h2 className="text-xl font-bold mb-4 text-center">Fichiers Uploadés</h2>
+          <button
+            onClick={fetchFiles}
+            className="w-full bg-gradient-to-r from-purple-600 to-blue-600 text-white py-2 rounded-lg font-semibold hover:from-purple-700 hover:to-blue-700 transition-all duration-300 transform hover:scale-105 mb-4"
+          >
+            Afficher les fichiers
+          </button>
+          <div className="bg-gray-800 p-4 rounded-lg text-white max-w-full overflow-auto" style={{ maxHeight: '300px' }}>
+            {error && <p className="text-red-500">{error}</p>}
+            {files.map((file, index) => (
+              <div key={index} className="mb-2">
+                <a
+                  href={`/upload/${file}`}
+                  download
+                  className="text-blue-400 hover:text-blue-500 underline"
+                >
+                  {file}
+                </a>
+              </div>
+            ))}
+          </div>
+        </div>
+      );
+    }
+
+    function App() {
+      return (
+        <div className="min-h-screen flex flex-col items-center justify-center">
+          <FileUpload />
+          <FileList />
+        </div>
+      );
+    }
+
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+    root.render(<App />);
+  </script>
+</body>
+</html>
